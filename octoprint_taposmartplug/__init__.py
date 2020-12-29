@@ -350,8 +350,6 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 
 		p100.turnOn() #Sends the turn on request
 
-		self._taposmartplug_logger.debug(chk)
-
 		if plug["autoConnect"] and self._printer.is_closed_or_error():
 			c = threading.Timer(int(plug["autoConnectDelay"]), self._printer.connect)
 			c.daemon = True
@@ -390,8 +388,6 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 		p100.login() #Sends credentials to the plug and creates AES Key and IV for further methods
 
 		p100.turnOff() #Sends the turn on request
-
-		self._taposmartplug_logger.debug(chk)
 
 		self._stop_idle_timer()
 		return self.check_status(plugip)
