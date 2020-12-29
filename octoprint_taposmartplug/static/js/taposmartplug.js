@@ -1,11 +1,11 @@
 /*
- * View model for OctoPrint-TPLinkSmartplug
+ * View model for OctoPrint-TapoSmartplug
  *
  * Author: jneilliii
  * License: AGPLv3
  */
 $(function() {
-	function tplinksmartplugViewModel(parameters) {
+	function taposmartplugViewModel(parameters) {
 		var self = this;
 
 		self.settings = parameters[0];
@@ -77,7 +77,7 @@ $(function() {
 		})
 
 		self.toggleShutdownTitle = ko.pureComputed(function() {
-			return self.settings.settings.plugins.tplinksmartplug.powerOffWhenIdle() ? 'Disable Automatic Power Off' : 'Enable Automatic Power Off';
+			return self.settings.settings.plugins.taposmartplug.powerOffWhenIdle() ? 'Disable Automatic Power Off' : 'Enable Automatic Power Off';
 		})
 
 		// Hack to remove automatically added Cancel button
@@ -111,9 +111,9 @@ $(function() {
 		};
 
 		self.onToggleAutomaticShutdown = function(data) {
-			if (self.settings.settings.plugins.tplinksmartplug.powerOffWhenIdle()) {
+			if (self.settings.settings.plugins.taposmartplug.powerOffWhenIdle()) {
 				$.ajax({
-					url: API_BASEURL + "plugin/tplinksmartplug",
+					url: API_BASEURL + "plugin/taposmartplug",
 					type: "POST",
 					dataType: "json",
 					data: JSON.stringify({
@@ -123,7 +123,7 @@ $(function() {
 				})
 			} else {
 				$.ajax({
-					url: API_BASEURL + "plugin/tplinksmartplug",
+					url: API_BASEURL + "plugin/taposmartplug",
 					type: "POST",
 					dataType: "json",
 					data: JSON.stringify({
@@ -138,7 +138,7 @@ $(function() {
 			self.timeoutPopup.remove();
 			self.timeoutPopup = undefined;
 			$.ajax({
-				url: API_BASEURL + "plugin/tplinksmartplug",
+				url: API_BASEURL + "plugin/taposmartplug",
 				type: "POST",
 				dataType: "json",
 				data: JSON.stringify({
@@ -177,20 +177,20 @@ $(function() {
 
 		self.get_cost = function(data){ // make computedObservable()?
 			if("total" in data.emeter.get_realtime && typeof data.emeter.get_realtime.total == "function"){
-				return (data.emeter.get_realtime.total() * self.settings.settings.plugins.tplinksmartplug.cost_rate()).toFixed(2);
+				return (data.emeter.get_realtime.total() * self.settings.settings.plugins.taposmartplug.cost_rate()).toFixed(2);
 			} else if ("total_wh" in data.emeter.get_realtime && typeof data.emeter.get_realtime.total_wh == "function") {
-				return ((data.emeter.get_realtime.total_wh()/1000) * self.settings.settings.plugins.tplinksmartplug.cost_rate()).toFixed(2);
+				return ((data.emeter.get_realtime.total_wh()/1000) * self.settings.settings.plugins.taposmartplug.cost_rate()).toFixed(2);
 			} else if("total" in data.emeter.get_realtime && typeof data.emeter.get_realtime.total !== "function"){
-				return (data.emeter.get_realtime.total * self.settings.settings.plugins.tplinksmartplug.cost_rate()).toFixed(2);
+				return (data.emeter.get_realtime.total * self.settings.settings.plugins.taposmartplug.cost_rate()).toFixed(2);
 			} else if ("total_wh" in data.emeter.get_realtime && typeof data.emeter.get_realtime.total_wh !== "function") {
-				return ((data.emeter.get_realtime.total_wh/1000) * self.settings.settings.plugins.tplinksmartplug.cost_rate()).toFixed(2);
+				return ((data.emeter.get_realtime.total_wh/1000) * self.settings.settings.plugins.taposmartplug.cost_rate()).toFixed(2);
 			} else {
 				return "-"
 			}
 		}
 
 		self.onStartup = function() {
-			var sidebar_tab = $('#sidebar_plugin_tplinksmartplug');
+			var sidebar_tab = $('#sidebar_plugin_taposmartplug');
 
 			sidebar_tab.on('show', function() {
 				self.refreshVisible(true);
@@ -203,7 +203,7 @@ $(function() {
 		}
 
 		self.onBeforeBinding = function() {
-			self.arrSmartplugs(self.settings.settings.plugins.tplinksmartplug.arrSmartplugs());
+			self.arrSmartplugs(self.settings.settings.plugins.taposmartplug.arrSmartplugs());
 		}
 
 		self.onAfterBinding = function() {
@@ -214,8 +214,8 @@ $(function() {
 		}
 
 		self.onSettingsBeforeSave = function(payload) {
-			var plugs_updated = (ko.toJSON(self.arrSmartplugs()) !== ko.toJSON(self.settings.settings.plugins.tplinksmartplug.arrSmartplugs()));
-			self.arrSmartplugs(self.settings.settings.plugins.tplinksmartplug.arrSmartplugs());
+			var plugs_updated = (ko.toJSON(self.arrSmartplugs()) !== ko.toJSON(self.settings.settings.plugins.taposmartplug.arrSmartplugs()));
+			self.arrSmartplugs(self.settings.settings.plugins.taposmartplug.arrSmartplugs());
 			if(plugs_updated){
 				self.checkStatuses();
 			}
@@ -230,7 +230,7 @@ $(function() {
 		}
 
 		self.onTabChange = function(current, previous) {
-				if (current === "#tab_plugin_tplinksmartplug") {
+				if (current === "#tab_plugin_taposmartplug") {
 					self.plotEnergyData(false);
 				}
 			};
@@ -241,7 +241,7 @@ $(function() {
 
 		self.editPlug = function(data) {
 			self.selectedPlug(data);
-			$("#TPLinkPlugEditor").modal("show");
+			$("#TapoPlugEditor").modal("show");
 		}
 
 		self.addPlug = function() {
@@ -275,16 +275,16 @@ $(function() {
 								'automaticShutdownEnabled':ko.observable(false),
 								'event_on_upload':ko.observable(false),
 								'event_on_startup':ko.observable(false)});
-			self.settings.settings.plugins.tplinksmartplug.arrSmartplugs.push(self.selectedPlug());
-			$("#TPLinkPlugEditor").modal("show");
+			self.settings.settings.plugins.taposmartplug.arrSmartplugs.push(self.selectedPlug());
+			$("#TapoPlugEditor").modal("show");
 		}
 
 		self.removePlug = function(row) {
-			self.settings.settings.plugins.tplinksmartplug.arrSmartplugs.remove(row);
+			self.settings.settings.plugins.taposmartplug.arrSmartplugs.remove(row);
 		}
 
 		self.onDataUpdaterPluginMessage = function(plugin, data) {
-			if (plugin != "tplinksmartplug") {
+			if (plugin != "taposmartplug") {
 				return;
 			}
 
@@ -296,12 +296,12 @@ $(function() {
 				self.checkStatus(data.ip);
 			}
 
-			if(data.updatePlot && window.location.href.indexOf('tplinksmartplug') > 0){
+			if(data.updatePlot && window.location.href.indexOf('taposmartplug') > 0){
 				self.plotEnergyData();
 			}
 
 			if(data.hasOwnProperty("powerOffWhenIdle")) {
-				self.settings.settings.plugins.tplinksmartplug.powerOffWhenIdle(data.powerOffWhenIdle);
+				self.settings.settings.plugins.taposmartplug.powerOffWhenIdle(data.powerOffWhenIdle);
 
 				if (data.type == "timeout") {
 					if ((data.timeout_value != null) && (data.timeout_value > 0)) {
@@ -342,7 +342,7 @@ $(function() {
 
 		self.sendTurnOn = function(data) {
 			$.ajax({
-				url: API_BASEURL + "plugin/tplinksmartplug",
+				url: API_BASEURL + "plugin/taposmartplug",
 				type: "POST",
 				dataType: "json",
 				data: JSON.stringify({
@@ -357,18 +357,18 @@ $(function() {
 		};
 
 		self.turnOff = function(data) {
-			if((data.displayWarning() || (self.isPrinting() && data.warnPrinting())) && !$("#TPLinkSmartPlugWarning").is(':visible')){
+			if((data.displayWarning() || (self.isPrinting() && data.warnPrinting())) && !$("#TapoSmartPlugWarning").is(':visible')){
 				self.selectedPlug(data);
-				$("#TPLinkSmartPlugWarning").modal("show");
+				$("#TapoSmartPlugWarning").modal("show");
 			} else {
-				$("#TPLinkSmartPlugWarning").modal("hide");
+				$("#TapoSmartPlugWarning").modal("hide");
 				self.sendTurnOff(data);
 			}
 		}; 
 
 		self.sendTurnOff = function(data) {
 			$.ajax({
-			url: API_BASEURL + "plugin/tplinksmartplug",
+			url: API_BASEURL + "plugin/taposmartplug",
 			type: "POST",
 			dataType: "json",
 			data: JSON.stringify({
@@ -385,7 +385,7 @@ $(function() {
 		self.plotEnergyData = function(data) {
 			if(self.plotted_graph_ip()) {
 				$.ajax({
-				url: API_BASEURL + "plugin/tplinksmartplug",
+				url: API_BASEURL + "plugin/taposmartplug",
 				type: "POST",
 				dataType: "json",
 				data: JSON.stringify({
@@ -394,7 +394,7 @@ $(function() {
 					record_limit: self.plotted_graph_records(),
 					record_offset: self.plotted_graph_records_offset()
 				}),
-				cost_rate: self.settings.settings.plugins.tplinksmartplug.cost_rate(),
+				cost_rate: self.settings.settings.plugins.taposmartplug.cost_rate(),
 				contentType: "application/json; charset=UTF-8"
 				}).done(function(data){
 						var trace_current = {x:[],y:[],mode:'lines+markers',name:'Current (Amp)',xaxis: 'x2',yaxis: 'y2'};
@@ -410,7 +410,7 @@ $(function() {
 							trace_total.x.push(row[0]);
 							trace_total.y.push(row[3]);
 							trace_cost.x.push(row[0]);
-							trace_cost.y.push(row[3]*self.settings.settings.plugins.tplinksmartplug.cost_rate());
+							trace_cost.y.push(row[3]*self.settings.settings.plugins.taposmartplug.cost_rate());
 						});
 						var layout = {title:'TP-Link Smartplug Energy Data',
 									grid: {rows: 2, columns: 1, pattern: 'independent'},
@@ -486,8 +486,8 @@ $(function() {
 								};
 
 						var plot_data = [trace_total,trace_current,trace_power,trace_cost/* ,trace_voltage */]
-						if(window.location.href.indexOf('tplinksmartplug') > 0){
-							Plotly.react('tplinksmartplug_energy_graph',plot_data,layout,options);
+						if(window.location.href.indexOf('taposmartplug') > 0){
+							Plotly.react('taposmartplug_energy_graph',plot_data,layout,options);
 						}
 					});
 			}
@@ -497,7 +497,7 @@ $(function() {
 
 		self.toggle_legend = function(){
 			self.legend_visible(self.legend_visible() ? false : true);
-			Plotly.relayout('tplinksmartplug_energy_graph',{showlegend: self.legend_visible()});
+			Plotly.relayout('taposmartplug_energy_graph',{showlegend: self.legend_visible()});
 		}
 
 		self.updateDictionary = function(data){
@@ -509,7 +509,7 @@ $(function() {
 							for (key in data.emeter.get_realtime){
 								item.emeter.get_realtime[key] = ko.observable(data.emeter.get_realtime[key]);
 							}
-							if(data.ip == self.plotted_graph_ip() && window.location.href.indexOf('tplinksmartplug') > 0){
+							if(data.ip == self.plotted_graph_ip() && window.location.href.indexOf('taposmartplug') > 0){
 								self.plotEnergyData();
 							}
 						}
@@ -522,7 +522,7 @@ $(function() {
 
 		self.checkStatus = function(plugIP) {
 			$.ajax({
-				url: API_BASEURL + "plugin/tplinksmartplug",
+				url: API_BASEURL + "plugin/taposmartplug",
 				type: "GET",
 				dataType: "json",
 				data: {checkStatus:plugIP},
@@ -541,8 +541,8 @@ $(function() {
 	}
 
 	OCTOPRINT_VIEWMODELS.push([
-		tplinksmartplugViewModel,
+		taposmartplugViewModel,
 		["settingsViewModel","loginStateViewModel", "filesViewModel"],
-		["#navbar_plugin_tplinksmartplug","#settings_plugin_tplinksmartplug","#sidebar_plugin_tplinksmartplug_wrapper","#tab_plugin_tplinksmartplug","#tab_plugin_tplinksmartplug_link"]
+		["#navbar_plugin_taposmartplug","#settings_plugin_taposmartplug","#sidebar_plugin_taposmartplug_wrapper","#tab_plugin_taposmartplug","#tab_plugin_taposmartplug_link"]
 	]);
 });

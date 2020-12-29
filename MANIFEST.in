@@ -1,4 +1,4 @@
 include README.md
-recursive-include octoprint_tplinksmartplug/templates *
-recursive-include octoprint_tplinksmartplug/translations *
-recursive-include octoprint_tplinksmartplug/static *
+recursive-include octoprint_taposmartplug/templates *
+recursive-include octoprint_taposmartplug/translations *
+recursive-include octoprint_taposmartplug/static *
