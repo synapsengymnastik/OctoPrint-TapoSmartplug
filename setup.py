@@ -24,7 +24,7 @@ plugin_description = """Simple plugin to control Tapo Smartplug"""
 plugin_author = "Tyfy"
 
 # The plugin's author's mail address.
-plugin_author_email = "jneilliii+github@gmail.com"
+plugin_author_email = "github@tyfy.com"
 
 # The plugin's homepage URL. Can be overwritten within OctoPrint's internal data via __plugin_url__ in the plugin module
 plugin_url = "https://github.com/Tyfy/OctoPrint-TapoSmartplug"
