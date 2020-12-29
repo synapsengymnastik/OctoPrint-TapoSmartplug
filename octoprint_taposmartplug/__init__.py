@@ -417,9 +417,9 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 
 			self._taposmartplug_logger.debug(chk)
 
-			if chk == 1:
+			if chk == "True":
 				return dict(currentState="on", ip=plugip)
-			elif chk == 0:
+			elif chk == "False":
 				return dict(currentState="off", ip=plugip)
 			else:
 				self._taposmartplug_logger.debug(response)
