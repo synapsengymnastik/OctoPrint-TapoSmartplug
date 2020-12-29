@@ -349,24 +349,23 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 		p100.login() #Sends credentials to the plug and creates AES Key and IV for further methods
 
 		p100.turnOn() #Sends the turn on request
-		chk = 0
 
 		self._taposmartplug_logger.debug(chk)
-		if chk == 0:
-			if plug["autoConnect"] and self._printer.is_closed_or_error():
-				c = threading.Timer(int(plug["autoConnectDelay"]), self._printer.connect)
-				c.daemon = True
-				c.start()
-			if plug["sysCmdOn"]:
-				t = threading.Timer(int(plug["sysCmdOnDelay"]), os.system, args=[plug["sysRunCmdOn"]])
-				t.daemon = True
-				t.start()
-			if self.powerOffWhenIdle == True and plug["automaticShutdownEnabled"] == True:
-				self._taposmartplug_logger.debug("Resetting idle timer since plug %s was just turned on." % plugip)
-				self._waitForHeaters = False
-				self._reset_idle_timer()
 
-			return self.check_status(plugip)
+		if plug["autoConnect"] and self._printer.is_closed_or_error():
+			c = threading.Timer(int(plug["autoConnectDelay"]), self._printer.connect)
+			c.daemon = True
+			c.start()
+		if plug["sysCmdOn"]:
+			t = threading.Timer(int(plug["sysCmdOnDelay"]), os.system, args=[plug["sysRunCmdOn"]])
+			t.daemon = True
+			t.start()
+		if self.powerOffWhenIdle == True and plug["automaticShutdownEnabled"] == True:
+			self._taposmartplug_logger.debug("Resetting idle timer since plug %s was just turned on." % plugip)
+			self._waitForHeaters = False
+			self._reset_idle_timer()
+
+		return self.check_status(plugip)
 
 	def turn_off(self, plugip):
 		timenow = datetime.now()
@@ -391,12 +390,11 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 		p100.login() #Sends credentials to the plug and creates AES Key and IV for further methods
 
 		p100.turnOff() #Sends the turn on request
-		chk = 0
 
 		self._taposmartplug_logger.debug(chk)
-		if chk == 0:
-			self._stop_idle_timer()
-			return self.check_status(plugip)
+
+		self._stop_idle_timer()
+		return self.check_status(plugip)
 
 	def check_statuses(self):
 		for plug in self._settings.get(["arrSmartplugs"]):
@@ -416,6 +414,8 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 			response = p100.getDeviceInfo() #Returns dict with all the device info
 
 			chk = self.lookup(json.loads(response), *["result", "device_on"])
+
+			self._taposmartplug_logger.debug(chk)
 
 			if chk == 1:
 				return dict(currentState="on", ip=plugip)
