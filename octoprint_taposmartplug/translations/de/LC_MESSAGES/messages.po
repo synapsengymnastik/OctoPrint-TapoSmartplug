@@ -73,8 +73,8 @@ msgid "Proceed"
 msgstr "Fortfahren"
 
 #: octoprint_taposmartplug/templates/taposmartplug_settings.jinja2:1
-msgid "TP-Link Smartplug Settings"
-msgstr "TP-Link Smartplug-Einstellungen"
+msgid "Tapo Smartplug Settings"
+msgstr "Tapo Smartplug-Einstellungen"
 
 #: octoprint_taposmartplug/templates/taposmartplug_settings.jinja2:5
 msgid "Plug"
@@ -286,7 +286,7 @@ msgid "Enable debug logging."
 msgstr "Aktivieren Sie die Debug-Protokollierung."
 
 #: octoprint_taposmartplug/templates/taposmartplug_settings.jinja2:152
-msgid "TP-Link Smartplug Editor"
+msgid "Tapo Smartplug Editor"
 msgstr ""
 
 #: octoprint_taposmartplug/templates/taposmartplug_settings.jinja2:157

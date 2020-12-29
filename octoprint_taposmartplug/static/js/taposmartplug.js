@@ -248,6 +248,8 @@ $(function() {
 			self.selectedPlug({'ip':ko.observable(''),
 								'label':ko.observable(''),
 								'icon':ko.observable('icon-bolt'),
+								'username':ko.observable(''),
+								'password':ko.observable(''),
 								'displayWarning':ko.observable(true),
 								'warnPrinting':ko.observable(false),
 								'gcodeEnabled':ko.observable(false),
@@ -412,7 +414,7 @@ $(function() {
 							trace_cost.x.push(row[0]);
 							trace_cost.y.push(row[3]*self.settings.settings.plugins.taposmartplug.cost_rate());
 						});
-						var layout = {title:'TP-Link Smartplug Energy Data',
+						var layout = {title:'Tapo Smartplug Energy Data',
 									grid: {rows: 2, columns: 1, pattern: 'independent'},
 									autosize: true,
 									showlegend: false,

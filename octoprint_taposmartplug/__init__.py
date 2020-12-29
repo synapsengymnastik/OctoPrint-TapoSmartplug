@@ -90,7 +90,6 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 		self._timeout_value = None
 		self._abort_timer = None
 		self._countdown_active = False
-		self.print_job_power = 0.0
 		self.print_job_started = False
 		self._waitForHeaters = False
 		self._waitForTimelapse = False
@@ -341,26 +340,16 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 		self._taposmartplug_logger.debug("Turning on %s." % plugip)
 		plug = self.plug_search(self._settings.get(["arrSmartplugs"]), "ip", plugip)
 		self._taposmartplug_logger.debug(plug)
-		if "/" in plugip:
-			plug_ip, plug_num = plugip.split("/")
-		else:
-			plug_ip = plugip
-			plug_num = -1
-		if plug["useCountdownRules"] and int(plug["countdownOnDelay"]) > 0:
-			self.sendCommand(json.loads('{"count_down":{"delete_all_rules":null}}'), plug_ip, plug_num)
-			chk = self.lookup(self.sendCommand(json.loads(
-				'{"count_down":{"add_rule":{"enable":1,"delay":%s,"act":1,"name":"turn on"}}}' % plug[
-					"countdownOnDelay"]), plug_ip, plug_num), *["count_down", "add_rule", "err_code"])
-			if chk == 0:
-				self._countdown_active = True
-				c = threading.Timer(int(plug["countdownOnDelay"]) + 3, self._plugin_manager.send_plugin_message,
-									[self._identifier, dict(check_status=True, ip=plugip)])
-				c.daemon = True
-				c.start()
-		else:
-			turn_on_cmnd = dict(system=dict(set_relay_state=dict(state=1)))
-			chk = self.lookup(self.sendCommand(turn_on_cmnd, plug_ip, plug_num),
-							  *["system", "set_relay_state", "err_code"])
+		plug_ip = plugip
+		plug_num = -1
+
+		p100 = PyP100.P100(plug["ip"], plug["username"], plug["password"]) #Creating a P100 plug object
+
+		p100.handshake() #Creates the cookies required for further methods 
+		p100.login() #Sends credentials to the plug and creates AES Key and IV for further methods
+
+		p100.turnOn() #Sends the turn on request
+		chk = 0
 
 		self._taposmartplug_logger.debug(chk)
 		if chk == 0:
@@ -385,21 +374,8 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 		self._taposmartplug_logger.info("Turning off %s at %s" % (plugip, timenow))
 		plug = self.plug_search(self._settings.get(["arrSmartplugs"]), "ip", plugip)
 		self._taposmartplug_logger.debug(plug)
-		if "/" in plugip:
-			plug_ip, plug_num = plugip.split("/")
-		else:
-			plug_ip = plugip
-			plug_num = -1
-		if plug["useCountdownRules"] and int(plug["countdownOffDelay"]) > 0:
-			self.sendCommand(json.loads('{"count_down":{"delete_all_rules":null}}'), plug_ip, plug_num)
-			chk = self.lookup(self.sendCommand(json.loads(
-				'{"count_down":{"add_rule":{"enable":1,"delay":%s,"act":0,"name":"turn off"}}}' % plug[
-					"countdownOffDelay"]), plug_ip, plug_num), *["count_down", "add_rule", "err_code"])
-			if chk == 0:
-				self._countdown_active = True
-				c = threading.Timer(int(plug["countdownOffDelay"]) + 3, self._plugin_manager.send_plugin_message,
-									[self._identifier, dict(check_status=True, ip=plugip)])
-				c.start()
+		plug_ip = plugip
+		plug_num = -1
 
 		if plug["sysCmdOff"]:
 			t = threading.Timer(int(plug["sysCmdOffDelay"]), os.system, args=[plug["sysRunCmdOff"]])
@@ -409,10 +385,13 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 			self._printer.disconnect()
 			time.sleep(int(plug["autoDisconnectDelay"]))
 
-		if not plug["useCountdownRules"]:
-			turn_off_cmnd = dict(system=dict(set_relay_state=dict(state=0)))
-			chk = self.lookup(self.sendCommand(turn_off_cmnd, plug_ip, plug_num),
-							  *["system", "set_relay_state", "err_code"])
+		p100 = PyP100.P100(plug["ip"], plug["username"], plug["password"]) #Creating a P100 plug object
+
+		p100.handshake() #Creates the cookies required for further methods 
+		p100.login() #Sends credentials to the plug and creates AES Key and IV for further methods
+
+		p100.turnOff() #Sends the turn on request
+		chk = 0
 
 		self._taposmartplug_logger.debug(chk)
 		if chk == 0:
@@ -421,93 +400,36 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 
 	def check_statuses(self):
 		for plug in self._settings.get(["arrSmartplugs"]):
-			chk = self.check_status(plug["ip"])
+			chk = self.check_status(plug["ip"], plug["username"], plug["password"])
 			self._plugin_manager.send_plugin_message(self._identifier, chk)
 
 	def check_status(self, plugip):
 		self._taposmartplug_logger.debug("Checking status of %s." % plugip)
 		if plugip != "":
-			emeter_data = None
 			today = datetime.today()
-			check_status_cmnd = dict(system=dict(get_sysinfo=dict()))
-			plug_ip = plugip.split("/")
-			self._taposmartplug_logger.debug(check_status_cmnd)
-			if len(plug_ip) == 2:
-				response = self.sendCommand(check_status_cmnd, plug_ip[0], plug_ip[1])
-				timer_chk = self.lookup(response, *["system", "get_sysinfo", "children"])[int(plug_ip[1])]["on_time"]
-			else:
-				response = self.sendCommand(check_status_cmnd, plug_ip[0])
-				timer_chk = self.deep_get(response, ["system", "get_sysinfo", "on_time"], default=0)
 
-			if timer_chk == 0 and self._countdown_active:
-				self._taposmartplug_logger.debug("Clearing previously active countdown timer flag")
-				self._countdown_active = False
+			plug = self.plug_search(self._settings.get(["arrSmartplugs"]), "ip", plugip)
 
-			self._taposmartplug_logger.debug(
-				self.deep_get(response, ["system", "get_sysinfo", "feature"], default=""))
-			if "ENE" in self.deep_get(response, ["system", "get_sysinfo", "feature"], default=""):
-				# if "ENE" in self.lookup(response, *["system","get_sysinfo","feature"]):
-				emeter_data_cmnd = dict(emeter=dict(get_realtime=dict()))
-				if len(plug_ip) == 2:
-					check_emeter_data = self.sendCommand(emeter_data_cmnd, plug_ip[0], plug_ip[1])
-				else:
-					check_emeter_data = self.sendCommand(emeter_data_cmnd, plug_ip[0])
-				if self.lookup(check_emeter_data, *["emeter", "get_realtime"]):
-					emeter_data = check_emeter_data["emeter"]
-					if "voltage_mv" in emeter_data["get_realtime"]:
-						v = emeter_data["get_realtime"]["voltage_mv"] / 1000.0
-					elif "voltage" in emeter_data["get_realtime"]:
-						v = emeter_data["get_realtime"]["voltage"]
-					else:
-						v = ""
-					if "current_ma" in emeter_data["get_realtime"]:
-						c = emeter_data["get_realtime"]["current_ma"] / 1000.0
-					elif "current" in emeter_data["get_realtime"]:
-						c = emeter_data["get_realtime"]["current"]
-					else:
-						c = ""
-					if "power_mw" in emeter_data["get_realtime"]:
-						p = emeter_data["get_realtime"]["power_mw"] / 1000.0
-					elif "power" in emeter_data["get_realtime"]:
-						p = emeter_data["get_realtime"]["power"]
-					else:
-						p = ""
-					if "total_wh" in emeter_data["get_realtime"]:
-						t = emeter_data["get_realtime"]["total_wh"] / 1000.0
-					elif "total" in emeter_data["get_realtime"]:
-						t = emeter_data["get_realtime"]["total"]
-					else:
-						t = ""
-					if self.db_path is not None:
-						db = sqlite3.connect(self.db_path)
-						cursor = db.cursor()
-						cursor.execute(
-							'''INSERT INTO energy_data(ip, timestamp, current, power, total, voltage) VALUES(?,?,?,?,?,?)''',
-							[plugip, today.isoformat(' '), c, p, t, v])
-						db.commit()
-						db.close()
+			p100 = PyP100.P100(plug["ip"], plug["username"], plug["password"]) #Creating a P100 plug object
+			p100.handshake() #Creates the cookies required for further methods 
+			p100.login() #Sends credentials to the plug and creates AES Key and IV for further methods
+			response = p100.getDeviceInfo() #Returns dict with all the device info
 
-			if len(plug_ip) == 2:
-				chk = self.lookup(response, *["system", "get_sysinfo", "children"])
-				if chk:
-					chk = chk[int(plug_ip[1])]["state"]
-			else:
-				chk = self.lookup(response, *["system", "get_sysinfo", "relay_state"])
+			chk = self.lookup(json.loads(response), *["result", "device_on"])
 
 			if chk == 1:
-				return dict(currentState="on", emeter=emeter_data, ip=plugip)
+				return dict(currentState="on", ip=plugip)
 			elif chk == 0:
-				return dict(currentState="off", emeter=emeter_data, ip=plugip)
+				return dict(currentState="off", ip=plugip)
 			else:
 				self._taposmartplug_logger.debug(response)
-				return dict(currentState="unknown", emeter=emeter_data, ip=plugip)
+				return dict(currentState="unknown", ip=plugip)
 
 	def get_api_commands(self):
 		return dict(
 			turnOn=["ip"],
 			turnOff=["ip"],
 			checkStatus=["ip"],
-			getEnergyData=["ip"],
 			enableAutomaticShutdown=[],
 			disableAutomaticShutdown=[],
 			abortAutomaticShutdown=[])
@@ -530,16 +452,6 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 			self._plugin_manager.send_plugin_message(self._identifier, response)
 		elif command == 'checkStatus':
 			response = self.check_status("{ip}".format(**data))
-		elif command == 'getEnergyData':
-			db = sqlite3.connect(self.db_path)
-			cursor = db.cursor()
-			cursor.execute(
-				'''SELECT timestamp, current, power, total, voltage FROM energy_data WHERE ip=? ORDER BY timestamp DESC LIMIT ?,?''',
-				(data["ip"], data["record_offset"], data["record_limit"]))
-			response = {'energy_data': cursor.fetchall()}
-			db.close()
-			self._taposmartplug_logger.debug(response)
-		# SELECT * FROM energy_data WHERE ip = '192.168.0.102' LIMIT 0,30
 		elif command == 'enableAutomaticShutdown':
 			self.powerOffWhenIdle = True
 			self._reset_idle_timer()
@@ -613,19 +525,12 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 		# Cancelled Print Interpreted Event
 		if event == Events.PRINT_FAILED and not self._printer.is_closed_or_error():
 			self._taposmartplug_logger.debug("Print cancelled, resetting job_power to 0")
-			self.print_job_power = 0.0
 			self.print_job_started = False
 			return
 		# Print Started Event
 		if event == Events.PRINT_STARTED and self._settings.getFloat(["cost_rate"]) > 0:
 			self.print_job_started = True
 			self._taposmartplug_logger.debug(payload.get("path", None))
-			for plug in self._settings.get(["arrSmartplugs"]):
-				status = self.check_status(plug["ip"])
-				self.print_job_power -= float(
-					self.deep_get(status, ["emeter", "get_realtime", "total_wh"], default=0)) / 1000
-				self.print_job_power -= float(self.deep_get(status, ["emeter", "get_realtime", "total"], default=0))
-				self._taposmartplug_logger.debug(self.print_job_power)
 
 		if event == Events.PRINT_STARTED and self.powerOffWhenIdle is True:
 			if self._abort_timer is not None:
@@ -655,23 +560,9 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 
 			for plug in self._settings.get(["arrSmartplugs"]):
 				status = self.check_status(plug["ip"])
-				self.print_job_power += float(
-					self.deep_get(status, ["emeter", "get_realtime", "total_wh"], default=0)) / 1000
-				self.print_job_power += float(self.deep_get(status, ["emeter", "get_realtime", "total"], default=0))
-				self._taposmartplug_logger.debug(self.print_job_power)
-
-			hours = (payload.get("time", 0) / 60) / 60
-			self._taposmartplug_logger.debug("hours: %s" % hours)
-			power_used = self.print_job_power * hours
-			self._taposmartplug_logger.debug("power used: %s" % power_used)
-			power_cost = power_used * self._settings.getFloat(["cost_rate"])
-			self._taposmartplug_logger.debug("power total cost: %s" % power_cost)
 
 			self._storage_interface = self._file_manager._storage(payload.get("origin", "local"))
-			self._storage_interface.set_additional_metadata(payload.get("path"), "statistics", dict(
-				lastPowerCost=dict(_default=float('{:.4f}'.format(power_cost)))), merge=True)
 
-			self.print_job_power = 0.0
 			self.print_job_started = False
 
 		if self.powerOffWhenIdle == True and event == Events.MOVIE_RENDERING:
