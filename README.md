@@ -1,3 +1,6 @@
+try to change it for p110 and energycost monitor !
+
+
 # OctoPrint-TapoSmartplug
 
 This is a fork of https://github.com/jneilliii/OctoPrint-TPLinkSmartplug with integration for the Tapo P100 smart plug using the [PyP100 library](https://github.com/fishbigger/TapoP100)
