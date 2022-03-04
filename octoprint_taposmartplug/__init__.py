@@ -162,10 +162,10 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 			debug_logging=False,
 			arrSmartplugs=[],
 			pollingInterval=15,
-			pollingEnabled=False,
-			thermal_runaway_monitoring=False,
-			thermal_runaway_max_bed=0,
-			thermal_runaway_max_extruder=0,
+			pollingEnabled=True,
+			thermal_runaway_monitoring=True,
+			thermal_runaway_max_bed=120,
+			thermal_runaway_max_extruder=250,
 			event_on_error_monitoring=False,
 			event_on_disconnect_monitoring=False,
 			event_on_upload_monitoring=False,
@@ -426,6 +426,36 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 			else:
 				self._taposmartplug_logger.debug(response)
 				return dict(currentState="unknown", ip=plugip)
+
+			emeter_data_cmnd = dict(emeter=dict(get_realtime=getEnergy()))
+			if len(plug_ip) == 2:
+					 check_emeter_data = self.sendCommand(emeter_data_cmnd, plug_ip[0], plug_ip[1])
+			else:
+				check_emeter_data = self.sendCommand(emeter_data_cmnd, plug_ip[0])
+			if self.lookup(check_emeter_data, *["emeter", "get_realtime"]):
+					 emeter_data = check_emeter_data["emeter"]
+			if "today_runtime" in emeter_data["get_realtime"]:
+					v = emeter_data["get_realtime"]["today_runtime"]
+			else:
+					v = ""
+			if "month_runtime" in emeter_data["get_realtime"]:
+					c = emeter_data["get_realtime"]["month_runtime"]
+			else:
+					c = ""
+			if "today_energy" in emeter_data["get_realtime"]:
+					p = emeter_data["get_realtime"]["today_energy"]
+			else:
+					p = ""
+			if "current_power" in emeter_data["get_realtime"]:
+				    t = emeter_data["get_realtime"]["current_power"]
+			else:
+					t = ""
+			if self.db_path is not None:
+				db = sqlite3.connect(self.db_path)
+				cursor = db.cursor()
+				cursor.execute('''INSERT INTO energy_data(ip, timestamp, today_runtime, month_runtime, today_energy, current_power) VALUES(?,?,?,?,?,?)''',[plugip, today.isoformat(' '), c, p, t, v])
+				db.commit()
+				db.close()
 
 	def get_api_commands(self):
 		return dict(
