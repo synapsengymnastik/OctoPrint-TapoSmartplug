@@ -14,26 +14,27 @@ plugin_package = "octoprint_taposmartplug"
 plugin_name = "OctoPrint-TapoSmartplug"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
-plugin_version = "0.0.1"
+plugin_version = "0.0.3"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
 plugin_description = """Simple plugin to control Tapo Smartplug"""
 
 # The plugin's author. Can be overwritten within OctoPrint's internal data via __plugin_author__ in the plugin module
-plugin_author = "Tyfy"
+plugin_author = "synapsengymnastik"
 
 # The plugin's author's mail address.
-plugin_author_email = "github@tyfy.com"
+plugin_author_email = "github@synapsengymnastik.com"
 
 # The plugin's homepage URL. Can be overwritten within OctoPrint's internal data via __plugin_url__ in the plugin module
-plugin_url = "https://github.com/Tyfy/OctoPrint-TapoSmartplug"
+plugin_url = "https://github.com/synapsengymnastik/OctoPrint-TapoSmartplug"
 
 # The plugin's license. Can be overwritten within OctoPrint's internal data via __plugin_license__ in the plugin module
 plugin_license = "AGPLv3"
 
 # Any additional requirements besides OctoPrint should be listed here
-plugin_requires = ["uptime","PyP100"]
+
+plugin_requires = ["uptime","PyP100 @ https://github.com/fishbigger/TapoP100/archive/refs/heads/main.zip"]
 
 ### --------------------------------------------------------------------------------------------------------------------
 ### More advanced options that you usually shouldn't have to touch follow after this point
